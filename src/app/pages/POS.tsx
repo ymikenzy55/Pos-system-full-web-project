@@ -20,11 +20,11 @@ export const POS = () => {
   );
 
   return (
-    <div className="flex h-screen bg-[#F5F5F5]">
+    <div className="flex flex-col lg:flex-row h-screen bg-[#F5F5F5]">
       {/* Product List */}
-      <div className="flex-1 flex flex-col p-6 overflow-hidden">
+      <div className="flex-1 flex flex-col p-3 md:p-6 overflow-hidden">
         {/* Search & Filters */}
-        <div className="flex flex-col gap-4 mb-6">
+        <div className="flex flex-col gap-3 md:gap-4 mb-4 md:mb-6">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             <input 
@@ -35,7 +35,7 @@ export const POS = () => {
               className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#5D4037] focus:border-transparent transition-all shadow-sm bg-white"
             />
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap overflow-x-auto pb-2">
             <button 
               onClick={() => setSelectedCategory(null)}
               className={clsx(
@@ -63,12 +63,12 @@ export const POS = () => {
         {/* Product Cards Grid */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide">
           {filteredProducts.length === 0 ? (
-            <div className="text-center py-20 text-gray-400">
-              <p className="text-xl font-medium">No products found</p>
-              <p className="text-sm mt-2">Try adjusting your search or category filter.</p>
+            <div className="text-center py-12 md:py-20 text-gray-400">
+              <p className="text-lg md:text-xl font-medium">No products found</p>
+              <p className="text-xs md:text-sm mt-2">Try adjusting your search or category filter.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-4 pb-4">
               {filteredProducts.map(product => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -77,8 +77,8 @@ export const POS = () => {
         </div>
       </div>
 
-      {/* Cart Sidebar */}
-      <div className="w-[400px] bg-white border-l border-gray-200 flex flex-col h-full shadow-xl z-20">
+      {/* Cart Sidebar - Desktop: Fixed sidebar, Mobile: Bottom sheet */}
+      <div className="lg:w-[380px] xl:w-[400px] bg-white border-t lg:border-t-0 lg:border-l border-gray-200 flex flex-col h-[40vh] lg:h-full shadow-xl z-20">
         <Cart onPayment={() => setIsPaymentOpen(true)} />
       </div>
 
