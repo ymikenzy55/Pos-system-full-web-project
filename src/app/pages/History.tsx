@@ -4,6 +4,7 @@ import { Search, FileText, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { InvoiceModal } from '../components/pos/InvoiceModal';
 import { Transaction } from '../types';
+import { formatCurrency } from '../utils/currency';
 
 export const History = () => {
   const { transactions, customers } = useStore();
@@ -87,7 +88,7 @@ export const History = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E6E0D4]">
             <p className="text-sm text-[#8D6E63] mb-1">Total Revenue</p>
-            <p className="text-2xl font-bold text-[#5D4037]">GH₵{dateTotals.revenue.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-[#5D4037]">{formatCurrency(dateTotals.revenue)}</p>
           </div>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E6E0D4]">
             <p className="text-sm text-[#8D6E63] mb-1">Items Sold</p>
@@ -133,7 +134,7 @@ export const History = () => {
                   </td>
                   <td className="p-4 text-[#8D6E63]">{t.items.length} items</td>
                   <td className="p-4 text-[#8D6E63] capitalize">{t.paymentMethod}</td>
-                  <td className="p-4 font-bold text-[#5D4037]">GH₵{t.total.toFixed(2)}</td>
+                  <td className="p-4 font-bold text-[#5D4037]">{formatCurrency(t.total)}</td>
                   <td className="p-4 text-green-600 font-medium capitalize">{t.status}</td>
                   <td className="p-4">
                     <button 

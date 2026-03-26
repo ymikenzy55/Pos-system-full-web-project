@@ -1,55 +1,45 @@
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useStore } from '../StoreContext';
-import { TrendingUp, Coins, ShoppingCart, Package, AlertTriangle, Clock, Users } from 'lucide-react';
+import { dashboardAPI } from '../services/api';
+import { TrendingUp, Coins, ShoppingCart, Package, AlertTriangle, Clock } from 'lucide-react';
+import { formatCurrency } from '../utils/currency';
 
 interface DashboardProps {
   onNavigate?: (tab: string) => void;
 }
 
 export const Dashboard = ({ onNavigate }: DashboardProps = {}) => {
-  const { transactions, products, customers } = useStore();
+  const { currentShop, transactions, products, dashboardStats } = useStore();
+  const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [lowStock, setLowStock] = useState<any[]>([]);
 
-  const today = useMemo(() => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    return { start, end };
-  }, []);
-
-  const todayStats = useMemo(() => {
-    const todayTransactions = transactions.filter(t => {
-      const transDate = new Date(t.date);
-      return transDate >= today.start && transDate <= today.end;
-    });
-    const revenue = todayTransactions.reduce((sum, t) => sum + t.total, 0);
-    const orders = todayTransactions.length;
-    const itemsSold = todayTransactions.reduce((sum, t) => 
-      sum + t.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0
-    );
-    return { revenue, orders, itemsSold, transactions: todayTransactions };
-  }, [transactions, today]);
-
+  // Calculate low stock from products immediately (no API call needed)
   const lowStockProducts = useMemo(() => 
-    products.filter(p => p.stock < 10).sort((a, b) => a.stock - b.stock),
+    products.filter(p => p.stock <= (p.lowStockThreshold || 10)).slice(0, 5),
     [products]
   );
 
-  const topProducts = useMemo(() => {
-    const productSales: Record<string, { name: string; quantity: number; revenue: number }> = {};
-    todayStats.transactions.forEach(t => {
-      t.items.forEach(item => {
-        if (!productSales[item.id]) {
-          productSales[item.id] = { name: item.name, quantity: 0, revenue: 0 };
-        }
-        productSales[item.id].quantity += item.quantity;
-        productSales[item.id].revenue += item.price * item.quantity;
-      });
-    });
-    return Object.entries(productSales)
-      .map(([id, data]) => ({ id, ...data }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
-  }, [todayStats.transactions]);
+  useEffect(() => {
+    if (currentShop) {
+      // Set low stock immediately from local data
+      setLowStock(lowStockProducts);
+      
+      // Load top products in background (only data we don't have locally)
+      loadTopProducts();
+    }
+  }, [currentShop, lowStockProducts]);
+
+  const loadTopProducts = async () => {
+    if (!currentShop) return;
+    
+    try {
+      const shopId = currentShop.id || currentShop.shop?.id;
+      const topResponse = await dashboardAPI.getTopProducts(shopId, 5);
+      setTopProducts((topResponse as any).data);
+    } catch (error) {
+      // Silent fail - not critical
+    }
+  };
 
   const recentTransactions = useMemo(() => transactions.slice(0, 5), [transactions]);
 
@@ -76,12 +66,12 @@ export const Dashboard = ({ onNavigate }: DashboardProps = {}) => {
               <Coins size={16} className="text-green-600 md:w-5 md:h-5" />
             </div>
           </div>
-          <p className="text-xl md:text-3xl font-bold text-[#5D4037]">GH₵{todayStats.revenue.toFixed(2)}</p>
-          <p className="text-xs text-[#8D6E63] mt-1">{todayStats.orders} orders</p>
+          <p className="text-xl md:text-3xl font-bold text-[#5D4037]">{formatCurrency(dashboardStats.todayRevenue)}</p>
+          <p className="text-xs text-[#8D6E63] mt-1">{dashboardStats.todayOrders} orders</p>
         </button>
 
         <button 
-          onClick={() => onNavigate?.('transactions')}
+          onClick={() => onNavigate?.('sales')}
           className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-[#E6E0D4] hover:shadow-md transition-all text-left hover:scale-105 cursor-pointer"
         >
           <div className="flex items-center justify-between mb-2">
@@ -90,8 +80,8 @@ export const Dashboard = ({ onNavigate }: DashboardProps = {}) => {
               <ShoppingCart size={16} className="text-blue-600 md:w-5 md:h-5" />
             </div>
           </div>
-          <p className="text-xl md:text-3xl font-bold text-[#5D4037]">{todayStats.orders}</p>
-          <p className="text-xs text-[#8D6E63] mt-1">{todayStats.itemsSold} items sold</p>
+          <p className="text-xl md:text-3xl font-bold text-[#5D4037]">{dashboardStats.todayOrders}</p>
+          <p className="text-xs text-[#8D6E63] mt-1">{dashboardStats.todayItemsSold} items sold</p>
         </button>
 
         <button 
@@ -105,42 +95,28 @@ export const Dashboard = ({ onNavigate }: DashboardProps = {}) => {
             </div>
           </div>
           <p className="text-xl md:text-3xl font-bold text-[#5D4037]">{products.length}</p>
-          <p className="text-xs text-[#8D6E63] mt-1">{lowStockProducts.length} low stock</p>
-        </button>
-
-        <button 
-          onClick={() => onNavigate?.('customers')}
-          className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-[#E6E0D4] hover:shadow-md transition-all text-left hover:scale-105 cursor-pointer"
-        >
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-[#8D6E63] font-medium text-xs md:text-sm">Customers</h3>
-            <div className="bg-orange-100 p-1.5 md:p-2 rounded-lg">
-              <Users size={16} className="text-orange-600 md:w-5 md:h-5" />
-            </div>
-          </div>
-          <p className="text-xl md:text-3xl font-bold text-[#5D4037]">{customers.length}</p>
-          <p className="text-xs text-[#8D6E63] mt-1">Total registered</p>
+          <p className="text-xs text-[#8D6E63] mt-1">{lowStock.length} low stock</p>
         </button>
       </div>
 
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
         <div className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-[#E6E0D4]">
-          <h3 className="text-base md:text-lg font-bold text-[#5D4037] mb-4">Top Selling Products Today</h3>
+          <h3 className="text-base md:text-lg font-bold text-[#5D4037] mb-4">Top Selling Products</h3>
           {topProducts.length === 0 ? (
-            <p className="text-[#8D6E63] text-center py-8">No sales today yet</p>
+            <p className="text-[#8D6E63] text-center py-8">No sales yet</p>
           ) : (
             <div className="space-y-3">
-              {topProducts.map((product, index) => (
-                <div key={product.id} className="flex items-center gap-3 p-3 rounded-lg bg-[#FDFBF7] hover:bg-[#F5F1E8] transition-colors">
+              {topProducts.map((item, index) => (
+                <div key={item.product?.id || index} className="flex items-center gap-3 p-3 rounded-lg bg-[#FDFBF7] hover:bg-[#F5F1E8] transition-colors">
                   <div className="w-8 h-8 rounded-full bg-[#5D4037] text-white flex items-center justify-center font-bold text-sm">
                     {index + 1}
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold text-[#3E2723]">{product.name}</p>
-                    <p className="text-xs text-[#8D6E63]">{product.quantity} units sold</p>
+                    <p className="font-semibold text-[#3E2723]">{item.product?.name || 'Unknown'}</p>
+                    <p className="text-xs text-[#8D6E63]">{item.quantitySold || 0} units sold</p>
                   </div>
-                  <p className="font-bold text-[#5D4037]">GH₵{product.revenue.toFixed(2)}</p>
+                  <p className="font-bold text-[#5D4037]">{formatCurrency(item.totalRevenue || 0)}</p>
                 </div>
               ))}
             </div>
@@ -152,11 +128,11 @@ export const Dashboard = ({ onNavigate }: DashboardProps = {}) => {
             <AlertTriangle size={18} className="text-orange-500 md:w-5 md:h-5" />
             <h3 className="text-base md:text-lg font-bold text-[#5D4037]">Low Stock Alert</h3>
           </div>
-          {lowStockProducts.length === 0 ? (
+          {lowStock.length === 0 ? (
             <p className="text-[#8D6E63] text-center py-8">All products well stocked</p>
           ) : (
             <div className="space-y-3 max-h-[300px] overflow-y-auto">
-              {lowStockProducts.map(product => (
+              {lowStock.map(product => (
                 <div key={product.id} className="flex items-center justify-between p-3 rounded-lg bg-orange-50 border border-orange-200">
                   <div>
                     <p className="font-semibold text-[#3E2723]">{product.name}</p>
@@ -209,7 +185,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps = {}) => {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right font-bold text-[#5D4037]">
-                      GH₵{transaction.total.toFixed(2)}
+                      {formatCurrency(transaction.total)}
                     </td>
                   </tr>
                 ))}

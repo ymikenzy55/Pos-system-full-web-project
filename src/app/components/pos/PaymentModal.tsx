@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useStore } from '../../StoreContext';
-import { CreditCard, Banknote, X, Check, Loader2, Printer, ArrowRight, User, Phone } from 'lucide-react';
+import { CreditCard, Banknote, X, Check, Loader2, Printer, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
 import { Transaction } from '../../types';
 import { InvoiceModal } from './InvoiceModal';
+import { formatCurrency } from '../../utils/currency';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -13,62 +14,26 @@ interface PaymentModalProps {
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, total }) => {
-  const { processTransaction, addCustomer, customers } = useStore();
+  const { processTransaction } = useStore();
   const [method, setMethod] = useState<'cash' | 'card' | 'split'>('cash');
   const [cashAmount, setCashAmount] = useState<number>(0);
-  const [cardAmount, setCardAmount] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [success, setSuccess] = useState(false);
   const [completedTransaction, setCompletedTransaction] = useState<Transaction | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
 
   if (!isOpen) return null;
 
   const handlePayment = async () => {
-    if (!customerName.trim()) {
-      toast.error('Customer name is required');
-      return;
-    }
-
-    if (!customerPhone.trim()) {
-      toast.error('Customer phone is required');
-      return;
-    }
-
     setIsProcessing(true);
     try {
-      // Check if customer exists or create new one
-      let existingCustomer = customers.find(c => c.phone === customerPhone);
-      let customerId: string | undefined;
-
-      if (!existingCustomer) {
-        // Create new customer
-        const newCustomer = {
-          name: customerName,
-          email: '',
-          phone: customerPhone
-        };
-        addCustomer(newCustomer);
-        
-        // Wait a bit for state to update, then find the customer
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Find by phone since we just added it
-        existingCustomer = customers.find(c => c.phone === customerPhone);
-        customerId = existingCustomer?.id;
-      } else {
-        customerId = existingCustomer.id;
-      }
-
-      const result = await processTransaction(method, cashAmount, cardAmount, customerId);
+      const result = await processTransaction(method, cashAmount, 0);
       if (result) {
         setCompletedTransaction(result);
         setSuccess(true);
       }
-    } catch (error) {
-      toast.error('Payment failed');
+    } catch (error: any) {
+      toast.error(error.error || 'Payment failed');
     } finally {
       setIsProcessing(false);
     }
@@ -79,10 +44,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, tot
   const handleClose = () => {
     setSuccess(false);
     setCompletedTransaction(null);
-    setCustomerName('');
-    setCustomerPhone('');
     setCashAmount(0);
-    setCardAmount(0);
     onClose();
   };
 
@@ -132,38 +94,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, tot
               <>
                 <h2 className="text-2xl font-bold text-[#5D4037] mb-6 text-center">Payment</h2>
                 
-                {/* Customer Information */}
-                <div className="space-y-4 mb-6 bg-[#FDFBF7] p-4 rounded-xl border border-[#E6E0D4]">
-                  <h3 className="text-sm font-semibold text-[#5D4037] mb-3">Customer Information</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-[#8D6E63] mb-2">
-                      <User size={16} className="inline mr-1" />
-                      Customer Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Enter customer name"
-                      className="w-full px-4 py-2 bg-white border border-[#E6E0D4] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D4037] text-[#3E2723]"
-                      autoFocus
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-[#8D6E63] mb-2">
-                      <Phone size={16} className="inline mr-1" />
-                      Phone Number *
-                    </label>
-                    <input
-                      type="tel"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      placeholder="Enter phone number"
-                      className="w-full px-4 py-2 bg-white border border-[#E6E0D4] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5D4037] text-[#3E2723]"
-                    />
-                  </div>
-                </div>
-
                 <div className="flex justify-center gap-4 mb-8">
                   <button
                     onClick={() => setMethod('cash')}
@@ -185,14 +115,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, tot
                     }`}
                   >
                     <CreditCard size={24} />
-                    <span className="font-medium text-sm">Card</span>
+                    <span className="font-medium text-sm">MoMo</span>
                   </button>
                 </div>
 
                 <div className="space-y-6">
                   <div className="flex justify-between items-center text-lg font-medium text-gray-600">
                     <span>Total Due</span>
-                    <span className="text-2xl font-bold text-[#5D4037]">GH₵{total.toFixed(2)}</span>
+                    <span className="text-2xl font-bold text-[#5D4037]">{formatCurrency(total)}</span>
                   </div>
 
                   {method === 'cash' && (
@@ -212,7 +142,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, tot
                       {changeDue > 0 && (
                          <div className="mt-4 flex justify-between items-center text-[#4CAF50] font-medium">
                            <span>Change Due</span>
-                           <span className="text-lg font-bold">GH₵{changeDue.toFixed(2)}</span>
+                           <span className="text-lg font-bold">{formatCurrency(changeDue)}</span>
                          </div>
                       )}
                     </div>

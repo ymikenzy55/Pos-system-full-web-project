@@ -45,15 +45,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'manager'] },
-    { id: 'pos', label: 'Point of Sale', icon: ShoppingCart, roles: ['admin', 'manager', 'cashier'] },
-    { id: 'inventory', label: 'Inventory', icon: Package, roles: ['admin', 'manager'] },
-    { id: 'customers', label: 'Customers', icon: Users, roles: ['admin', 'manager', 'cashier'] },
-    { id: 'transactions', label: 'History', icon: History, roles: ['admin', 'manager', 'cashier'] },
-    { id: 'settings', label: 'Settings', icon: Settings, roles: ['admin'] },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['ADMIN', 'MANAGER'] },
+    { id: 'pos', label: 'Point of Sale', icon: ShoppingCart, roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
+    { id: 'inventory', label: 'Inventory', icon: Package, roles: ['ADMIN', 'MANAGER'] },
+    { id: 'sales', label: 'Sales', icon: History, roles: ['ADMIN', 'MANAGER', 'CASHIER'] },
+    { id: 'settings', label: 'Settings', icon: Settings, roles: ['ADMIN'] },
   ];
 
-  const filteredItems = menuItems.filter(item => user && item.roles.includes(user.role));
+  const filteredItems = menuItems.filter(item => user && user.role && item.roles.includes(user.role));
 
   return (
     <>
@@ -137,18 +136,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
             <span className="font-medium">Logout</span>
           </button>
         </div>
-
-        <ConfirmDialog
-          isOpen={showLogoutConfirm}
-          onClose={() => setShowLogoutConfirm(false)}
-          onConfirm={confirmLogout}
-          title="Confirm Logout"
-          message="Are you sure you want to logout? Any unsaved changes will be lost."
-          confirmText="Logout"
-          cancelText="Cancel"
-          type="warning"
-        />
       </div>
+
+      {/* Logout Confirmation Dialog - Rendered outside sidebar for proper centering */}
+      <ConfirmDialog
+        isOpen={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        onConfirm={confirmLogout}
+        title="Confirm Logout"
+        message="Are you sure you want to logout? Any unsaved changes will be lost."
+        confirmText="Logout"
+        cancelText="Cancel"
+        type="warning"
+      />
     </>
   );
 };

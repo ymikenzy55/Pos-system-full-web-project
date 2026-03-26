@@ -1,0 +1,275 @@
+// Prisma Schema for POS System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - System users who can access the platform
+model User {
+  id        String   @id @default(uuid())
+  firstName String
+  lastName  String
+  email     String   @unique
+  password  String   // Hashed with bcrypt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  staffMembers  StaffMember[]
+  stockMovements StockMovement[]
+
+  @@index([email])
+}
+
+// Shop model - Retail locations
+model Shop {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  staff           StaffMember[]
+  categories      Category[]
+  products        Product[]
+  customers       Customer[]
+  sales           Sale[]
+  refunds         Refund[]
+  stockMovements  StockMovement[]
+  idempotencyKeys IdempotencyKey[]
+}
+
+// StaffMember model - Links users to shops with roles
+model StaffMember {
+  id        String   @id @default(uuid())
+  userId    String
+  shopId    String
+  role      Role     @default(CASHIER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop  Shop  @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  sales Sale[]
+  refunds Refund[]
+
+  @@unique([userId, shopId])
+  @@index([shopId])
+  @@index([userId])
+}
+
+// Category model - Product categories
+model Category {
+  id          String   @id @default(uuid())
+  shopId      String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  shop     Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  products Product[]
+
+  @@index([shopId])
+}
+
+// Product model - Items for sale
+model Product {
+  id                String   @id @default(uuid())
+  shopId            String
+  categoryId        String
+  name              String
+  sku               String
+  barcode           String?
+  price             Float
+  costPrice         Float
+  stock             Int      @default(0)
+  lowStockThreshold Int      @default(10)
+  image             String?  // Base64 encoded image or URL
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  shop           Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  category       Category        @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  saleItems      SaleItem[]
+  refundItems    RefundItem[]
+  stockMovements StockMovement[]
+
+  @@unique([shopId, sku])
+  @@index([shopId])
+  @@index([categoryId])
+  @@index([sku])
+}
+
+// Customer model - Shop customers
+model Customer {
+  id           String   @id @default(uuid())
+  shopId       String
+  name         String
+  phone        String
+  totalSpent   Float    @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  shop  Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  sales Sale[]
+
+  @@unique([shopId, phone])
+  @@index([shopId])
+}
+
+// Sale model - Sales transactions
+model Sale {
+  id            String        @id @default(uuid())
+  shopId        String
+  staffMemberId String
+  customerId    String?
+  paymentMethod PaymentMethod
+  totalAmount   Float
+  createdAt     DateTime      @default(now())
+
+  // Relations
+  shop           Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  staffMember    StaffMember     @relation(fields: [staffMemberId], references: [id], onDelete: Restrict)
+  customer       Customer?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items          SaleItem[]
+  refunds        Refund[]
+  stockMovements StockMovement[]
+
+  @@index([shopId])
+  @@index([staffMemberId])
+  @@index([customerId])
+  @@index([createdAt])
+}
+
+// SaleItem model - Line items in a sale
+model SaleItem {
+  id         String @id @default(uuid())
+  saleId     String
+  productId  String
+  quantity   Int
+  unitPrice  Float
+  totalPrice Float
+
+  // Relations
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+// Refund model - Refund transactions
+model Refund {
+  id            String   @id @default(uuid())
+  shopId        String
+  saleId        String
+  staffMemberId String
+  reason        String
+  totalAmount   Float
+  createdAt     DateTime @default(now())
+
+  // Relations
+  shop           Shop            @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  sale           Sale            @relation(fields: [saleId], references: [id], onDelete: Restrict)
+  staffMember    StaffMember     @relation(fields: [staffMemberId], references: [id], onDelete: Restrict)
+  items          RefundItem[]
+  stockMovements StockMovement[]
+
+  @@index([shopId])
+  @@index([saleId])
+  @@index([staffMemberId])
+  @@index([createdAt])
+}
+
+// RefundItem model - Line items in a refund
+model RefundItem {
+  id         String @id @default(uuid())
+  refundId   String
+  productId  String
+  quantity   Int
+  unitPrice  Float
+  totalPrice Float
+
+  // Relations
+  refund  Refund  @relation(fields: [refundId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([refundId])
+  @@index([productId])
+}
+
+// StockMovement model - Audit trail for inventory changes
+model StockMovement {
+  id        String           @id @default(uuid())
+  shopId    String
+  productId String
+  type      StockMovementType
+  quantity  Int              // Positive for increases, negative for decreases
+  userId    String?          // User who performed the action
+  saleId    String?          // Related sale (for SALE type)
+  refundId  String?          // Related refund (for REFUND type)
+  note      String?          // Additional notes (e.g., reason for adjustment)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  shop    Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  product Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  sale    Sale?    @relation(fields: [saleId], references: [id], onDelete: SetNull)
+  refund  Refund?  @relation(fields: [refundId], references: [id], onDelete: SetNull)
+
+  @@index([shopId])
+  @@index([productId])
+  @@index([createdAt])
+  @@index([type])
+}
+
+// IdempotencyKey model - Prevents duplicate operations
+model IdempotencyKey {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  shopId    String
+  response  String   // JSON stringified response
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
+
+  @@index([key])
+  @@index([expiresAt])
+  @@index([shopId])
+}
+
+// Enums
+enum Role {
+  ADMIN
+  MANAGER
+  CASHIER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  MOBILE_MONEY
+}
+
+enum StockMovementType {
+  RESTOCK
+  ADJUSTMENT
+  SALE
+  REFUND
+}

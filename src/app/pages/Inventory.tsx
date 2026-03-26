@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../StoreContext';
-import { Plus, Edit, Trash2, Check, X, Package, Search, Upload, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X, Package, Search, Upload, Image as ImageIcon, Tag, FolderPlus } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { categoryAPI } from '../services/api';
+import { formatCurrency } from '../utils/currency';
 
 export const Inventory = () => {
-  const { products, addProduct, updateProduct, deleteProduct } = useStore();
+  const { products, categories, addProduct, updateProduct, deleteProduct, currentShop } = useStore();
   const [isAdding, setIsAdding] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -14,18 +16,20 @@ export const Inventory = () => {
   const [newProduct, setNewProduct] = useState({ 
     name: '', 
     sku: '', 
-    price: 0, 
+    price: 0,
     stock: 0, 
-    category: '',
+    categoryId: '',
+    barcode: '',
     image: ''
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ 
     name: '', 
     sku: '', 
-    price: 0, 
+    price: 0,
     stock: 0, 
-    category: '',
+    categoryId: '',
+    barcode: '',
     image: ''
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; productId: string; productName: string }>({
@@ -35,6 +39,18 @@ export const Inventory = () => {
   });
   const [imagePreview, setImagePreview] = useState<string>('');
   const [editImagePreview, setEditImagePreview] = useState<string>('');
+  
+  // Category management state
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [categoryName, setCategoryName] = useState('');
+  const [categoryDescription, setCategoryDescription] = useState('');
+  const [loadingCategory, setLoadingCategory] = useState(false);
+  const [localCategories, setLocalCategories] = useState(categories);
+  const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState<{ show: boolean; categoryId: string; categoryName: string }>({
+    show: false,
+    categoryId: '',
+    categoryName: ''
+  });
 
   // Real-time search filtering
   const filteredProducts = useMemo(() => {
@@ -44,7 +60,7 @@ export const Inventory = () => {
     return products.filter(product => 
       product.name.toLowerCase().includes(search) ||
       product.sku.toLowerCase().includes(search) ||
-      product.category.toLowerCase().includes(search)
+      (product.category?.name || '').toLowerCase().includes(search)
     );
   }, [products, searchTerm]);
 
@@ -59,6 +75,55 @@ export const Inventory = () => {
   useMemo(() => {
     setCurrentPage(1);
   }, [searchTerm]);
+
+  // Update local categories when categories prop changes
+  useMemo(() => {
+    setLocalCategories(categories);
+  }, [categories]);
+
+  const handleAddCategory = async () => {
+    if (!categoryName.trim()) {
+      toast.error('Category name is required');
+      return;
+    }
+
+    if (!currentShop) {
+      toast.error('No shop selected');
+      return;
+    }
+
+    setLoadingCategory(true);
+    try {
+      const response: any = await categoryAPI.create(currentShop.id, {
+        name: categoryName,
+        description: categoryDescription,
+      });
+      setLocalCategories([...localCategories, response.data]);
+      toast.success('Category added successfully');
+      setCategoryName('');
+      setCategoryDescription('');
+      // Don't close modal - keep it open
+    } catch (error: any) {
+      toast.error(error.error || 'Failed to add category');
+    } finally {
+      setLoadingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!currentShop) {
+      toast.error('No shop selected');
+      return;
+    }
+
+    try {
+      await categoryAPI.delete(currentShop.id, categoryId);
+      setLocalCategories(localCategories.filter(cat => cat.id !== categoryId));
+      toast.success('Category deleted successfully');
+    } catch (error: any) {
+      toast.error(error.error || 'Failed to delete category');
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, isEdit = false) => {
     const file = e.target.files?.[0];
@@ -79,23 +144,23 @@ export const Inventory = () => {
   };
 
   const handleAdd = () => {
-    if (!newProduct.name || !newProduct.price) {
-        toast.error('Name and Price are required');
+    if (!newProduct.name || !newProduct.price || !newProduct.categoryId) {
+        toast.error('Name, Price, and Category are required');
         return;
     }
     
     addProduct({
       name: newProduct.name,
-      sku: newProduct.sku,
+      sku: newProduct.sku || `SKU-${Date.now()}`,
       price: newProduct.price,
-      stock: newProduct.stock,
-      category: newProduct.category || 'General',
-      image: newProduct.image || '',
-      description: '',
-      taxExempt: false
+      costPrice: newProduct.price * 0.6, // Auto-calculate cost as 60% of price
+      categoryId: newProduct.categoryId,
+      barcode: newProduct.barcode,
+      stock: newProduct.stock || 0,
+      image: newProduct.image,
     });
     setIsAdding(false);
-    setNewProduct({ name: '', sku: '', price: 0, stock: 0, category: '', image: '' });
+    setNewProduct({ name: '', sku: '', price: 0, stock: 0, categoryId: '', barcode: '', image: '' });
     setImagePreview('');
   };
 
@@ -106,7 +171,8 @@ export const Inventory = () => {
       sku: product.sku,
       price: product.price,
       stock: product.stock,
-      category: product.category,
+      categoryId: product.categoryId,
+      barcode: product.barcode || '',
       image: product.image || ''
     });
     setEditImagePreview(product.image || '');
@@ -114,7 +180,15 @@ export const Inventory = () => {
 
   const saveEdit = () => {
     if (editingId) {
-      updateProduct(editingId, editForm);
+      updateProduct(editingId, {
+        name: editForm.name,
+        sku: editForm.sku,
+        price: editForm.price,
+        stock: editForm.stock,
+        categoryId: editForm.categoryId,
+        barcode: editForm.barcode,
+        image: editForm.image,
+      });
       setEditingId(null);
       setEditImagePreview('');
     }
@@ -135,13 +209,22 @@ export const Inventory = () => {
             <h1 className="text-2xl md:text-3xl font-bold text-[#5D4037]">Inventory Management</h1>
             <p className="text-[#8D6E63] mt-1 text-sm">Manage your products, stock levels, and prices.</p>
         </div>
-        <button 
-          onClick={() => setIsAdding(true)}
-          className="bg-[#5D4037] text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-[#4E342E] transition-colors shadow-sm w-full md:w-auto"
-        >
-          <Plus size={20} />
-          Add Product
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setShowCategoryModal(true)}
+            className="bg-white border border-[#5D4037] text-[#5D4037] px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-[#FDFBF7] transition-colors shadow-sm"
+          >
+            <Tag size={20} />
+            Manage Categories
+          </button>
+          <button 
+            onClick={() => setIsAdding(true)}
+            className="bg-[#5D4037] text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-[#4E342E] transition-colors shadow-sm"
+          >
+            <Plus size={20} />
+            Add Product
+          </button>
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -238,12 +321,16 @@ export const Inventory = () => {
                   />
                 </td>
                 <td className="p-4">
-                  <input 
+                  <select 
                     className="border border-[#D7CCC8] p-2 rounded w-full focus:outline-none focus:border-[#5D4037]" 
-                    placeholder="Category" 
-                    value={newProduct.category} 
-                    onChange={e => setNewProduct({...newProduct, category: e.target.value})} 
-                  />
+                    value={newProduct.categoryId} 
+                    onChange={e => setNewProduct({...newProduct, categoryId: e.target.value})}
+                  >
+                    <option value="">Select Category</option>
+                    {localCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
                 </td>
                 <td className="p-4">
                     <div className="flex gap-2 justify-end">
@@ -301,7 +388,18 @@ export const Inventory = () => {
                     <td className="p-4"><input className="border border-[#D7CCC8] p-2 rounded w-full" value={editForm.sku} onChange={e => setEditForm({...editForm, sku: e.target.value})} /></td>
                     <td className="p-4"><input className="border border-[#D7CCC8] p-2 rounded w-full" type="number" value={editForm.price} onChange={e => setEditForm({...editForm, price: parseFloat(e.target.value)})} /></td>
                     <td className="p-4"><input className="border border-[#D7CCC8] p-2 rounded w-full" type="number" value={editForm.stock} onChange={e => setEditForm({...editForm, stock: parseFloat(e.target.value)})} /></td>
-                    <td className="p-4"><input className="border border-[#D7CCC8] p-2 rounded w-full" value={editForm.category} onChange={e => setEditForm({...editForm, category: e.target.value})} /></td>
+                    <td className="p-4">
+                      <select 
+                        className="border border-[#D7CCC8] p-2 rounded w-full" 
+                        value={editForm.categoryId} 
+                        onChange={e => setEditForm({...editForm, categoryId: e.target.value})}
+                      >
+                        <option value="">Select Category</option>
+                        {localCategories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="p-4">
                         <div className="flex gap-2 justify-end">
                             <button onClick={saveEdit} className="bg-green-100 text-green-700 p-2 rounded-lg"><Check size={18} /></button>
@@ -322,7 +420,7 @@ export const Inventory = () => {
                     </td>
                     <td className="p-4 font-medium text-[#3E2723]">{product.name}</td>
                     <td className="p-4 text-[#8D6E63]">{product.sku}</td>
-                    <td className="p-4 text-[#3E2723] font-bold">GH₵{product.price.toFixed(2)}</td>
+                    <td className="p-4 text-[#3E2723] font-bold">{formatCurrency(product.price)}</td>
                     <td className={clsx("p-4 font-medium", product.stock === 0 ? "text-red-600" : product.stock < 10 ? "text-orange-500" : "text-green-600")}>
                       <div className="flex items-center gap-2">
                         <span>{product.stock}</span>
@@ -331,7 +429,7 @@ export const Inventory = () => {
                         )}
                       </div>
                     </td>
-                    <td className="p-4 text-[#8D6E63]"><span className="bg-[#FDFBF7] px-2 py-1 rounded border border-[#E6E0D4] text-xs">{product.category}</span></td>
+                    <td className="p-4 text-[#8D6E63]"><span className="bg-[#FDFBF7] px-2 py-1 rounded border border-[#E6E0D4] text-xs">{product.category?.name || 'N/A'}</span></td>
                     <td className="p-4">
                       <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
@@ -406,6 +504,150 @@ export const Inventory = () => {
         onConfirm={confirmDelete}
         title="Delete Product"
         message={`Are you sure you want to delete "${deleteConfirm.productName}"? This action cannot be undone and will remove the product from your inventory.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      {/* Category Management Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-[#5D4037] rounded-xl">
+                  <Tag className="text-white" size={24} />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-[#3E2723]">Manage Categories</h2>
+                  <p className="text-sm text-[#8D6E63]">Add and organize product categories</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCategoryModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} className="text-[#8D6E63]" />
+              </button>
+            </div>
+
+            {/* Add Category Form */}
+            <div className="mb-6 p-4 bg-[#FDFBF7] rounded-xl border border-[#E6E0D4]">
+              <h3 className="font-semibold text-[#5D4037] mb-4 flex items-center gap-2">
+                <FolderPlus size={20} />
+                Add New Category
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#5D4037] mb-2">
+                    Category Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={categoryName}
+                    onChange={(e) => setCategoryName(e.target.value)}
+                    placeholder="e.g., Beverages, Snacks, Dairy"
+                    className="w-full px-4 py-2 rounded-xl border border-[#E6E0D4] focus:outline-none focus:ring-2 focus:ring-[#5D4037]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[#5D4037] mb-2">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    value={categoryDescription}
+                    onChange={(e) => setCategoryDescription(e.target.value)}
+                    placeholder="Brief description of this category"
+                    rows={2}
+                    className="w-full px-4 py-2 rounded-xl border border-[#E6E0D4] focus:outline-none focus:ring-2 focus:ring-[#5D4037] resize-none"
+                  />
+                </div>
+                <button
+                  onClick={handleAddCategory}
+                  disabled={loadingCategory}
+                  className="w-full px-4 py-2 bg-[#5D4037] text-white rounded-xl hover:bg-[#4E342E] transition-colors disabled:opacity-50 font-medium"
+                >
+                  {loadingCategory ? 'Adding...' : 'Add Category'}
+                </button>
+              </div>
+            </div>
+
+            {/* Categories List */}
+            <div>
+              <h3 className="font-semibold text-[#5D4037] mb-3">Existing Categories ({localCategories.length})</h3>
+              {localCategories.length === 0 ? (
+                <div className="text-center py-8 text-[#8D6E63]">
+                  <Tag size={48} className="mx-auto mb-3 opacity-50" />
+                  <p>No categories yet. Add your first category above.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {localCategories.map((category) => {
+                    const productCount = products.filter(p => p.categoryId === category.id).length;
+                    
+                    return (
+                      <div
+                        key={category.id}
+                        className="p-3 bg-white border border-[#E6E0D4] rounded-xl hover:shadow-sm transition-shadow"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-[#3E2723]">{category.name}</h4>
+                            {category.description && (
+                              <p className="text-sm text-[#8D6E63] mt-1">{category.description}</p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs bg-[#FDFBF7] px-3 py-1 rounded-full text-[#8D6E63] border border-[#E6E0D4]">
+                              {productCount} products
+                            </span>
+                            <button
+                              onClick={() => setDeleteCategoryConfirm({ 
+                                show: true, 
+                                categoryId: category.id, 
+                                categoryName: category.name 
+                              })}
+                              disabled={productCount > 0}
+                              className={`p-2 rounded-lg transition-colors ${
+                                productCount > 0
+                                  ? 'opacity-50 cursor-not-allowed bg-gray-100'
+                                  : 'bg-red-100 text-red-600 hover:bg-red-200'
+                              }`}
+                              title={productCount > 0 ? 'Cannot delete category with products' : 'Delete category'}
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setShowCategoryModal(false)}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-colors font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Category Confirmation */}
+      <ConfirmDialog
+        isOpen={deleteCategoryConfirm.show}
+        onClose={() => setDeleteCategoryConfirm({ show: false, categoryId: '', categoryName: '' })}
+        onConfirm={() => {
+          handleDeleteCategory(deleteCategoryConfirm.categoryId);
+          setDeleteCategoryConfirm({ show: false, categoryId: '', categoryName: '' });
+        }}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteCategoryConfirm.categoryName}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"

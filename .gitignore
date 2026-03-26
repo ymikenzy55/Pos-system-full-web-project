@@ -23,6 +23,8 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+logs/
+*.log
 
 # Editor directories and files
 .vscode/*
@@ -42,7 +44,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
-*.log
 *.cache
 
 # IDE
@@ -51,3 +52,13 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+# Development documentation (optional - remove if you want to include them)
+BROWSER_CACHE_FIX.md
+SERVERS_RESTARTED.md
+TEST_CUSTOMER_REMOVAL.md
+CUSTOMER_REMOVAL_COMPLETE.md
+IMPLEMENTATION_COMPLETE.md
+
+# Kiro AI files (optional)
+.kiro/

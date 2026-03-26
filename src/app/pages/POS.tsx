@@ -12,10 +12,10 @@ export const POS = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
-  const categories = Array.from(new Set(products.map(p => p.category)));
+  const categories = Array.from(new Set(products.map(p => p.category?.name).filter(Boolean)));
 
   const filteredProducts = products.filter(p => 
-    (selectedCategory ? p.category === selectedCategory : true) &&
+    (selectedCategory ? p.category?.name === selectedCategory : true) &&
     (searchTerm ? p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.sku.toLowerCase().includes(searchTerm.toLowerCase()) : true)
   );
 

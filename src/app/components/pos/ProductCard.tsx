@@ -3,7 +3,8 @@ import { Product } from '../../types';
 import { Plus, Check } from 'lucide-react';
 import { useStore } from '../../StoreContext';
 import { clsx } from 'clsx';
-import { ImageWithFallback } from '../figma/ImageWithFallback'; // Assuming this exists per instructions
+import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { formatCurrency } from '../../utils/currency';
 
 interface ProductCardProps {
   product: Product;
@@ -42,10 +43,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       <div className="p-4 flex flex-col flex-1 w-full">
         <h3 className="font-semibold text-[#3E2723] text-lg leading-tight mb-1 truncate w-full">{product.name}</h3>
-        <p className="text-sm text-[#8D6E63] mb-3 truncate w-full">{product.category}</p>
+        <p className="text-sm text-[#8D6E63] mb-3 truncate w-full">{product.category?.name || 'Uncategorized'}</p>
         
         <div className="mt-auto flex items-center justify-between w-full">
-          <span className="font-bold text-[#5D4037] text-xl">GH₵{product.price.toFixed(2)}</span>
+          <span className="font-bold text-[#5D4037] text-xl">{formatCurrency(product.price)}</span>
           <div className="w-8 h-8 rounded-full bg-[#FDFBF7] flex items-center justify-center text-[#5D4037] group-hover:bg-[#5D4037] group-hover:text-white transition-colors">
             <Plus size={18} />
           </div>

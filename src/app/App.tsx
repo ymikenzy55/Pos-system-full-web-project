@@ -6,8 +6,7 @@ import { Dashboard } from './pages/Dashboard';
 import { POS } from './pages/POS';
 import { Inventory } from './pages/Inventory';
 import { Reports } from './pages/Reports';
-import { Customers } from './pages/Customers';
-import { History } from './pages/History';
+import { Sales } from './pages/Sales';
 import { Settings } from './pages/Settings';
 import { Toaster } from 'sonner';
 
@@ -26,9 +25,7 @@ const MainContent = () => {
         {activeTab === 'dashboard' && <Dashboard onNavigate={setActiveTab} />}
         {activeTab === 'pos' && <POS />}
         {activeTab === 'inventory' && <Inventory />}
-        {activeTab === 'customers' && <Customers />}
-        {activeTab === 'transactions' && <History />}
-        {activeTab === 'reports' && <Reports />}
+        {activeTab === 'sales' && <Sales />}
         {activeTab === 'settings' && <Settings />}
       </main>
     </div>

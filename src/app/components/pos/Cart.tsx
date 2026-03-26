@@ -5,6 +5,7 @@ import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '../ConfirmDialog';
+import { formatCurrency } from '../../utils/currency';
 
 interface CartProps {
   onPayment: () => void;
@@ -66,10 +67,10 @@ export const Cart: React.FC<CartProps> = ({ onPayment }) => {
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1 pr-2">
                   <h4 className="font-semibold text-sm md:text-base text-[#3E2723] leading-tight line-clamp-1">{item.name}</h4>
-                  <p className="text-xs text-[#8D6E63] mt-1">GH₵{item.price.toFixed(2)}</p>
+                  <p className="text-xs text-[#8D6E63] mt-1">{formatCurrency(item.price)}</p>
                 </div>
                 <div className="text-right">
-                  <span className="font-bold text-sm md:text-base text-[#5D4037]">GH₵{(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-bold text-sm md:text-base text-[#5D4037]">{formatCurrency(item.price * item.quantity)}</span>
                 </div>
               </div>
 
@@ -125,21 +126,21 @@ export const Cart: React.FC<CartProps> = ({ onPayment }) => {
       <div className="p-3 md:p-5 bg-[#FDFBF7] border-t border-[#F0EBE0] space-y-2 md:space-y-3">
         <div className="flex justify-between text-xs md:text-sm text-[#8D6E63]">
           <span>Subtotal</span>
-          <span>GH₵{cartSubtotal.toFixed(2)}</span>
+          <span>{formatCurrency(cartSubtotal)}</span>
         </div>
         {cartDiscount > 0 && (
           <div className="flex justify-between text-xs md:text-sm text-[#FF8F00]">
             <span>Discount</span>
-            <span>-GH₵{cartDiscount.toFixed(2)}</span>
+            <span>-{formatCurrency(cartDiscount)}</span>
           </div>
         )}
         <div className="flex justify-between text-xs md:text-sm text-[#8D6E63]">
           <span>Tax (8%)</span>
-          <span>GH₵{cartTax.toFixed(2)}</span>
+          <span>{formatCurrency(cartTax)}</span>
         </div>
         <div className="flex justify-between items-center pt-2 md:pt-3 border-t border-[#E0E0E0]">
           <span className="font-bold text-base md:text-lg text-[#3E2723]">Total</span>
-          <span className="font-bold text-xl md:text-2xl text-[#5D4037]">GH₵{cartTotal.toFixed(2)}</span>
+          <span className="font-bold text-xl md:text-2xl text-[#5D4037]">{formatCurrency(cartTotal)}</span>
         </div>
 
         <button 
@@ -147,7 +148,7 @@ export const Cart: React.FC<CartProps> = ({ onPayment }) => {
           className="w-full mt-3 md:mt-4 bg-[#5D4037] text-white py-3 md:py-4 rounded-xl font-bold text-base md:text-lg shadow-lg hover:bg-[#4E342E] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
         >
           <CreditCard size={20} className="md:w-6 md:h-6" />
-          <span className="truncate">Charge GH₵{(cartTotal).toFixed(2)}</span>
+          <span className="truncate">Charge {formatCurrency(cartTotal)}</span>
         </button>
       </div>
 

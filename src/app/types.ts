@@ -1,13 +1,16 @@
-export type Role = 'admin' | 'manager' | 'cashier';
+export type Role = 'ADMIN' | 'MANAGER' | 'CASHIER';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  password: string;
+  password?: string;
   role: Role;
   avatar?: string;
-  active: boolean;
+  active?: boolean;
+  firstName?: string;
+  lastName?: string;
+  shop?: any;
 }
 
 export interface Product {
@@ -15,11 +18,18 @@ export interface Product {
   name: string;
   sku: string;
   price: number;
-  category: string;
+  costPrice?: number;
+  category?: {
+    id: string;
+    name: string;
+    description?: string;
+  };
+  categoryId?: string;
   stock: number;
   image?: string;
+  barcode?: string;
   description?: string;
-  taxExempt: boolean;
+  taxExempt?: boolean;
 }
 
 export interface CartItem extends Product {
@@ -32,11 +42,9 @@ export interface CartItem extends Product {
 export interface Customer {
   id: string;
   name: string;
-  email: string;
   phone: string;
-  loyaltyPoints: number;
   totalSpent: number;
-  lastVisit: string;
+  lastPurchaseDate?: string;
 }
 
 export interface Transaction {
