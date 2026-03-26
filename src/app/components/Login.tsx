@@ -296,18 +296,7 @@ export const Login = () => {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsRegisterMode(!isRegisterMode);
-                setErrors({ email: '', password: '', firstName: '', lastName: '', shopName: '' });
-              }}
-              className="text-[#5D4037] hover:underline text-sm font-medium"
-            >
-              {isRegisterMode ? 'Already have an account? Sign in' : 'Need to create an admin account? Register'}
-            </button>
-          </div>
+
         </div>
       </div>
     </div>
