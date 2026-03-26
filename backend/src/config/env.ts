@@ -5,12 +5,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment-specific .env file
-const envFile = process.env.NODE_ENV === 'production' 
-  ? '.env.production' 
-  : '.env.development';
-
-dotenv.config({ path: path.resolve(__dirname, '../../', envFile) });
+// Load environment-specific .env file only in development
+if (process.env.NODE_ENV !== 'production') {
+  const envFile = '.env.development';
+  dotenv.config({ path: path.resolve(__dirname, '../../', envFile) });
+}
 
 // Validate required environment variables
 const requiredEnvVars = [
