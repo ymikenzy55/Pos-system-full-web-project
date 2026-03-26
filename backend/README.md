@@ -30,60 +30,52 @@ cd backend
 npm install
 ```
 
-### 2. Start Local PostgreSQL (Docker)
+### 2. Configure Environment
+
+Copy `.env.example` to `.env` and update with your credentials:
+
+```bash
+cp .env.example .env
+```
+
+Required environment variables:
+- `DATABASE_URL` - Your PostgreSQL connection string
+- `JWT_SECRET` - A secure random string for JWT signing
+- `JWT_EXPIRY` - Token expiration time (e.g., "24h")
+- `BCRYPT_SALT_ROUNDS` - Password hashing rounds (10 recommended)
+- `NODE_ENV` - "development" or "production"
+- `PORT` - Server port (default: 3000)
+- `FRONTEND_URL` - Your frontend URL for CORS
+
+### 3. Start Local PostgreSQL (Docker - Optional)
 
 ```bash
 docker-compose up -d
 ```
 
-This starts PostgreSQL on `localhost:5432` with:
-- Database: `pos_dev`
-- User: `postgres`
-- Password: `postgres123`
+Or use your own PostgreSQL instance or Supabase.
 
-### 3. Run Database Migrations
+### 4. Run Database Migrations
 
 ```bash
 npm run migrate
 ```
 
-### 4. Seed Development Data
+### 5. Seed Initial Data
 
 ```bash
 npm run seed
 ```
 
-This creates:
-- 3 users (admin, manager, cashier)
-- 1 shop with staff members
-- 5 categories
-- 25 products
-- 5 customers
-- Sample sales transactions
+This creates a super admin account and sample data for development.
 
-### 5. Start Development Server
+### 6. Start Development Server
 
 ```bash
 npm run dev
 ```
 
 Server runs on `http://localhost:3000`
-
-## Demo Credentials
-
-```
-Admin:
-  Email: admin@store.com
-  Password: admin123
-
-Manager:
-  Email: alice@store.com
-  Password: manager123
-
-Cashier:
-  Email: bob@store.com
-  Password: cashier123
-```
 
 ## API Endpoints
 
@@ -140,17 +132,34 @@ Cashier:
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.development` or `.env.production` and configure:
+The `.env.example` file shows all required environment variables. Copy it to `.env` and configure with your own values:
 
 ```env
+# Database - Use your PostgreSQL or Supabase connection string
 DATABASE_URL="postgresql://user:password@host:port/database"
-JWT_SECRET="your-secret-key"
+
+# JWT Configuration
+JWT_SECRET="your-secure-random-secret-key"
 JWT_EXPIRY="24h"
-BCRYPT_SALT_ROUNDS=12
+
+# Password Hashing
+BCRYPT_SALT_ROUNDS=10
+
+# Server Configuration
 NODE_ENV="development"
 PORT=3000
+
+# CORS
 FRONTEND_URL="http://localhost:5173"
+
+# Rate Limiting
+AUTH_RATE_LIMIT_WINDOW_MS=900000
+AUTH_RATE_LIMIT_MAX_REQUESTS=5
+API_RATE_LIMIT_WINDOW_MS=900000
+API_RATE_LIMIT_MAX_REQUESTS=100
 ```
+
+**Important:** Never commit your `.env` file to version control. Only `.env.example` should be in the repository.
 
 ## Production Deployment with Supabase
 
