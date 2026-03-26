@@ -130,6 +130,15 @@ export async function updateStaffRole(req: Request, res: Response) {
   const { staffId } = req.params;
   const { role } = req.body;
 
+  // Check if the requesting user is super admin
+  const requestingUser = await prisma.user.findUnique({
+    where: { id: req.user!.id },
+  });
+
+  if (requestingUser?.email !== 'admin@store.com') {
+    throw ApiError.forbidden('Only the super admin can change staff roles');
+  }
+
   const staffMember = await prisma.staffMember.update({
     where: { id: staffId as string },
     data: { role },

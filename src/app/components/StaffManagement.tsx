@@ -425,18 +425,25 @@ export const StaffManagement = ({ shopId }: { shopId: string }) => {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <select
-                      value={member.role}
-                      onChange={(e) => handleChangeRole(member.id, e.target.value, member.user.email)}
-                      disabled={isSelf}
-                      className={`px-3 py-2 rounded-lg border border-[#E6E0D4] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#5D4037] ${
-                        isSelf ? 'opacity-50 cursor-not-allowed' : ''
-                      }`}
-                    >
-                      <option value="CASHIER">Cashier</option>
-                      <option value="MANAGER">Manager</option>
-                      <option value="ADMIN">Admin</option>
-                    </select>
+                    {/* Only super admin can change roles */}
+                    {currentUser?.email === 'admin@store.com' ? (
+                      <select
+                        value={member.role}
+                        onChange={(e) => handleChangeRole(member.id, e.target.value, member.user.email)}
+                        disabled={isSelf}
+                        className={`px-3 py-2 rounded-lg border border-[#E6E0D4] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#5D4037] ${
+                          isSelf ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      >
+                        <option value="CASHIER">Cashier</option>
+                        <option value="MANAGER">Manager</option>
+                        <option value="ADMIN">Admin</option>
+                      </select>
+                    ) : (
+                      <span className="px-3 py-2 rounded-lg bg-[#F5F1E8] text-[#5D4037] text-sm font-medium">
+                        {member.role === 'ADMIN' ? 'Admin' : member.role === 'MANAGER' ? 'Manager' : 'Cashier'}
+                      </span>
+                    )}
 
                     <button
                       onClick={() => handleToggleStatus(member.id, member.isActive, member.user.email)}

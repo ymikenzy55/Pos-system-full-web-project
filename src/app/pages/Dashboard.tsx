@@ -57,7 +57,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps = {}) => {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-4 md:mb-6">
         <button 
-          onClick={() => onNavigate?.('transactions')}
+          onClick={() => onNavigate?.('reports')}
           className="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-[#E6E0D4] hover:shadow-md transition-all text-left hover:scale-105 cursor-pointer"
         >
           <div className="flex items-center justify-between mb-2">
@@ -67,7 +67,7 @@ export const Dashboard = ({ onNavigate }: DashboardProps = {}) => {
             </div>
           </div>
           <p className="text-xl md:text-3xl font-bold text-[#5D4037]">{formatCurrency(dashboardStats.todayRevenue)}</p>
-          <p className="text-xs text-[#8D6E63] mt-1">{dashboardStats.todayOrders} orders</p>
+          <p className="text-xs text-[#8D6E63] mt-1">{dashboardStats.todayOrders} orders • Click for detailed reports</p>
         </button>
 
         <button 
