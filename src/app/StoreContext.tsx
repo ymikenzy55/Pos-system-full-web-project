@@ -77,10 +77,22 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     const savedShop = localStorage.getItem('currentShop');
-    if (savedUser) {
+    const savedToken = localStorage.getItem('authToken');
+    
+    if (savedUser && savedToken) {
       setUser(JSON.parse(savedUser));
       if (savedShop) {
-        setCurrentShop(JSON.parse(savedShop));
+        const shop = JSON.parse(savedShop);
+        setCurrentShop(shop);
+        
+        // Preload cached data immediately for instant display
+        const cachedProducts = localStorage.getItem(`products_${shop.id}`);
+        const cachedStats = localStorage.getItem(`stats_${shop.id}`);
+        const cachedTransactions = localStorage.getItem(`transactions_${shop.id}`);
+        
+        if (cachedProducts) setProducts(JSON.parse(cachedProducts));
+        if (cachedStats) setDashboardStats(JSON.parse(cachedStats));
+        if (cachedTransactions) setTransactions(JSON.parse(cachedTransactions));
       }
     }
   }, []);
@@ -89,6 +101,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (currentShop) {
       // Load all data in parallel for faster initial load
+      // Data will update in background while cached data shows immediately
       Promise.all([
         loadProducts(),
         loadCategories(),
@@ -129,6 +142,8 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
           status: 'completed' as const,
         }));
         setTransactions(transformedTransactions);
+        // Cache transactions for instant load
+        localStorage.setItem(`transactions_${currentShop.id}`, JSON.stringify(transformedTransactions));
       } else {
         setTransactions([]);
       }
@@ -215,6 +230,8 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response: any = await productAPI.getAll(currentShop.id);
       setProducts(response.data);
+      // Cache products for instant load next time
+      localStorage.setItem(`products_${currentShop.id}`, JSON.stringify(response.data));
     } catch (error) {
       toast.error('Failed to load products');
     }
@@ -236,11 +253,14 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     if (!currentShop) return;
     try {
       const response: any = await dashboardAPI.getTodaySales(currentShop.id);
-      setDashboardStats({
+      const stats = {
         todayRevenue: response.data?.totalRevenue || 0,
         todayOrders: response.data?.transactionCount || 0,
         todayItemsSold: response.data?.itemsSold || 0,
-      });
+      };
+      setDashboardStats(stats);
+      // Cache stats for instant load
+      localStorage.setItem(`stats_${currentShop.id}`, JSON.stringify(stats));
     } catch (error) {
       // Silent fail
     }

@@ -42,7 +42,7 @@ export const config = {
     expiry: process.env.JWT_EXPIRY || '24h' as string,
   },
   bcrypt: {
-    saltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS || '12', 10),
+    saltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS || '8', 10), // Reduced to 8 for faster auth
   },
   server: {
     nodeEnv: process.env.NODE_ENV!,
