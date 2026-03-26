@@ -1,0 +1,11 @@
+backend/
+node_modules/
+.git/
+.kiro/
+*.md
+!README.md
+!DEPLOYMENT.md
+.env
+.env.local
+.env.development
+.env.production

@@ -109,14 +109,18 @@ After running the seed command, a super admin account will be created. You can t
 
 ## Deployment
 
-### Frontend (Vercel)
-```bash
-npm run build
-# Deploy the dist folder to Vercel
-```
+This project is configured for deployment on:
+- Frontend: Vercel
+- Backend: Render
+- Database: Supabase
 
-### Backend (Render/Railway)
-See `backend/README.md` for detailed deployment instructions.
+See `DEPLOYMENT.md` for complete step-by-step deployment instructions.
+
+Quick deployment:
+1. Set up Supabase database
+2. Deploy backend to Render with environment variables
+3. Deploy frontend to Vercel with `VITE_API_URL`
+4. Update CORS settings in backend
 
 ## Security
 
