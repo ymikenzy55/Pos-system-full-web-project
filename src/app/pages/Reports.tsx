@@ -50,10 +50,20 @@ export const Reports = () => {
     
     setLoading(true);
     try {
-      const response: any = await dashboardAPI.getSalesSummary(currentShop.id, startDate, endDate);
+      const shopId = currentShop.id || currentShop.shop?.id;
+      const response: any = await dashboardAPI.getSalesSummary(shopId, startDate, endDate);
       setReportData(response.data);
     } catch (error: any) {
+      console.error('Report error:', error);
       toast.error('Failed to load report data');
+      // Set empty data structure to show empty state
+      setReportData({
+        summary: { totalRevenue: 0, totalOrders: 0, averageOrderValue: 0 },
+        salesByDate: [],
+        salesByCategory: [],
+        salesByPaymentMethod: [],
+        sales: []
+      });
     } finally {
       setLoading(false);
     }
@@ -87,6 +97,9 @@ export const Reports = () => {
   }
 
   const { summary, salesByDate, salesByCategory, salesByPaymentMethod, sales } = reportData;
+
+  // Show empty state if no sales
+  const hasData = sales && sales.length > 0;
 
   return (
     <div className="p-4 md:p-8 bg-[#FDFBF7] h-screen overflow-y-auto">
@@ -123,8 +136,23 @@ export const Reports = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+      {!hasData ? (
+        <div className="bg-white rounded-xl shadow-sm border border-[#E6E0D4] p-12 text-center">
+          <div className="w-24 h-24 bg-[#F5F1E8] rounded-full flex items-center justify-center mx-auto mb-4">
+            <FileChartColumn size={48} className="text-[#8D6E63]" />
+          </div>
+          <h3 className="text-xl font-bold text-[#5D4037] mb-2">No Sales Data</h3>
+          <p className="text-[#8D6E63] mb-4">
+            No sales found for the selected date range. Try adjusting the dates or make some sales first.
+          </p>
+          <p className="text-sm text-[#8D6E63]">
+            Selected period: {format(new Date(startDate), 'MMM dd, yyyy')} - {format(new Date(endDate), 'MMM dd, yyyy')}
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
         <div className="bg-gradient-to-br from-[#5D4037] to-[#4E342E] p-6 rounded-xl shadow-lg text-white">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-medium uppercase text-xs tracking-wider opacity-90">Total Revenue</h3>
@@ -336,6 +364,8 @@ export const Reports = () => {
           </table>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

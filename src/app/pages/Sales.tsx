@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../StoreContext';
-import { Search, FileText, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Search, FileText, Calendar, ChevronDown, ChevronUp, DollarSign, ShoppingCart, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { InvoiceModal } from '../components/pos/InvoiceModal';
 import { Transaction } from '../types';
@@ -27,6 +27,15 @@ export const Sales = () => {
       return matchesSearch && matchesDate;
     });
   }, [transactions, searchTerm, selectedDate]);
+
+  // Calculate totals for filtered transactions
+  const totals = useMemo(() => {
+    return filteredTransactions.reduce((acc, transaction) => ({
+      revenue: acc.revenue + transaction.total,
+      orders: acc.orders + 1,
+      items: acc.items + transaction.items.reduce((sum, item) => sum + item.quantity, 0)
+    }), { revenue: 0, orders: 0, items: 0 });
+  }, [filteredTransactions]);
 
   const dateTotals = useMemo(() => {
     if (!selectedDate) return null;
@@ -82,8 +91,48 @@ export const Sales = () => {
         </div>
       </div>
 
+      {/* Summary Cards - Always Show */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E6E0D4]">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-[#8D6E63] font-medium">Total Revenue</p>
+            <div className="bg-green-100 p-2 rounded-lg">
+              <DollarSign size={20} className="text-green-600" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-[#5D4037]">{formatCurrency(totals.revenue)}</p>
+          <p className="text-xs text-[#8D6E63] mt-1">
+            {selectedDate ? `For ${format(new Date(selectedDate), 'MMM dd, yyyy')}` : 'All time'}
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E6E0D4]">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-[#8D6E63] font-medium">Total Orders</p>
+            <div className="bg-blue-100 p-2 rounded-lg">
+              <ShoppingCart size={20} className="text-blue-600" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-[#5D4037]">{totals.orders}</p>
+          <p className="text-xs text-[#8D6E63] mt-1">
+            {totals.orders > 0 ? `Avg: ${formatCurrency(totals.revenue / totals.orders)}` : 'No orders'}
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-[#E6E0D4]">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm text-[#8D6E63] font-medium">Items Sold</p>
+            <div className="bg-purple-100 p-2 rounded-lg">
+              <Package size={20} className="text-purple-600" />
+            </div>
+          </div>
+          <p className="text-3xl font-bold text-[#5D4037]">{totals.items}</p>
+          <p className="text-xs text-[#8D6E63] mt-1">
+            {totals.orders > 0 ? `${(totals.items / totals.orders).toFixed(1)} items/order` : 'No items'}
+          </p>
+        </div>
+      </div>
+
       {dateTotals && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" style={{display: 'none'}}>
           <div className="bg-white p-4 rounded-xl shadow-sm border border-[#E6E0D4]">
             <p className="text-sm text-[#8D6E63] mb-1">Total Revenue</p>
             <p className="text-2xl font-bold text-[#5D4037]">{formatCurrency(dateTotals.revenue)}</p>
