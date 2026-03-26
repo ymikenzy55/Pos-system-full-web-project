@@ -4,16 +4,16 @@ Backend API for the Point of Sale System built with Node.js, Express, TypeScript
 
 ## Features
 
-- 🔐 JWT Authentication with bcrypt password hashing (12 salt rounds)
-- 👥 Role-Based Access Control (Admin, Manager, Cashier)
-- 🏪 Multi-shop support
-- 📦 Inventory management with stock tracking
-- 💰 Sales and refund processing
-- 🔄 Idempotency for critical operations
-- 📊 Dashboard analytics and reporting
-- 🛡️ Security: Helmet, CORS, rate limiting, input validation
-- 📝 Comprehensive logging with Winston
-- 🗄️ PostgreSQL (local) / Supabase (production)
+- JWT Authentication with bcrypt password hashing (10 salt rounds)
+- Role-Based Access Control (Admin, Manager, Cashier)
+- Multi-shop support
+- Inventory management with stock tracking
+- Sales and refund processing
+- Idempotency for critical operations
+- Dashboard analytics and reporting
+- Security: Helmet, CORS, rate limiting, input validation
+- Comprehensive logging with Winston
+- PostgreSQL (local) / Supabase (production)
 
 ## Prerequisites
 
@@ -244,17 +244,17 @@ backend/
 
 ## Security Features
 
-- ✅ JWT token authentication (24-hour expiry)
-- ✅ Bcrypt password hashing (12 salt rounds)
-- ✅ Role-based access control
-- ✅ Helmet security headers
-- ✅ CORS protection
-- ✅ Rate limiting (5 req/15min for auth, 100 req/15min for API)
-- ✅ Input validation and sanitization
-- ✅ SQL injection prevention (Prisma ORM)
-- ✅ Idempotency keys for critical operations
-- ✅ Request ID tracking
-- ✅ Comprehensive error handling and logging
+- JWT token authentication (24-hour expiry)
+- Bcrypt password hashing (10 salt rounds)
+- Role-based access control
+- Helmet security headers
+- CORS protection
+- Rate limiting (5 req/15min for auth, 100 req/15min for API)
+- Input validation and sanitization
+- SQL injection prevention (Prisma ORM)
+- Idempotency keys for critical operations
+- Request ID tracking
+- Comprehensive error handling and logging
 
 ## License
 

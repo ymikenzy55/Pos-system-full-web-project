@@ -4,13 +4,13 @@ A modern, full-stack POS system built with React, TypeScript, Node.js, and Postg
 
 ## Features
 
-- 🔐 Secure authentication with role-based access control (Admin, Manager, Cashier)
-- 📊 Real-time dashboard with sales analytics
-- 📦 Comprehensive inventory management
-- 💰 Fast payment processing (<1.5s)
-- 🧾 Sales tracking with unique transaction IDs
-- 📱 Fully responsive mobile design
-- ⚡ Optimized performance with batch operations
+- Secure authentication with role-based access control (Admin, Manager, Cashier)
+- Real-time dashboard with sales analytics
+- Comprehensive inventory management
+- Fast payment processing (<1.5s)
+- Sales tracking with unique transaction IDs
+- Fully responsive mobile design
+- Optimized performance with batch operations
 
 ## Tech Stack
 
