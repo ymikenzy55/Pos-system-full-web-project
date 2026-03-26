@@ -111,8 +111,53 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#FDFBF7] to-[#F5F1E8] px-4 py-8">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#FDFBF7] to-[#F5F1E8] px-4 py-8 relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Diagonal Slashes */}
+        <div className="absolute top-20 left-10 w-32 h-1 bg-[#5D4037] opacity-10 rotate-45"></div>
+        <div className="absolute top-32 left-20 w-24 h-1 bg-[#8D6E63] opacity-15 rotate-45"></div>
+        <div className="absolute bottom-40 right-16 w-40 h-1 bg-[#5D4037] opacity-10 -rotate-45"></div>
+        <div className="absolute bottom-28 right-28 w-28 h-1 bg-[#8D6E63] opacity-15 -rotate-45"></div>
+        <div className="absolute top-1/3 right-1/4 w-36 h-1 bg-[#5D4037] opacity-10 rotate-12"></div>
+        <div className="absolute bottom-1/3 left-1/4 w-32 h-1 bg-[#8D6E63] opacity-15 -rotate-12"></div>
+        
+        {/* Dotted Patterns */}
+        <div className="absolute top-16 right-20">
+          <div className="grid grid-cols-3 gap-3">
+            {[...Array(9)].map((_, i) => (
+              <div key={i} className="w-2 h-2 rounded-full bg-[#5D4037] opacity-20"></div>
+            ))}
+          </div>
+        </div>
+        <div className="absolute bottom-20 left-16">
+          <div className="grid grid-cols-4 gap-2">
+            {[...Array(12)].map((_, i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] opacity-25"></div>
+            ))}
+          </div>
+        </div>
+        <div className="absolute top-1/2 left-12">
+          <div className="grid grid-cols-2 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="w-2.5 h-2.5 rounded-full bg-[#5D4037] opacity-15"></div>
+            ))}
+          </div>
+        </div>
+        <div className="absolute top-1/4 right-12">
+          <div className="grid grid-cols-3 gap-2">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] opacity-20"></div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Large Decorative Circles */}
+        <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-[#5D4037] opacity-5"></div>
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-[#8D6E63] opacity-5"></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo & Title */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#5D4037] text-white mb-4 shadow-lg">
