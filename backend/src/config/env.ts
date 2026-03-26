@@ -15,10 +15,7 @@ if (process.env.NODE_ENV !== 'production') {
 const requiredEnvVars = [
   'DATABASE_URL',
   'JWT_SECRET',
-  'JWT_EXPIRY',
-  'BCRYPT_SALT_ROUNDS',
   'NODE_ENV',
-  'PORT',
   'FRONTEND_URL',
 ];
 
@@ -27,6 +24,14 @@ for (const envVar of requiredEnvVars) {
     throw new Error(`Missing required environment variable: ${envVar}`);
   }
 }
+
+// Log environment for debugging
+console.log('Environment check:', {
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT,
+  HAS_DATABASE_URL: !!process.env.DATABASE_URL,
+  HAS_JWT_SECRET: !!process.env.JWT_SECRET,
+});
 
 export const config = {
   database: {
