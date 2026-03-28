@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useStore } from '../StoreContext';
-import { Search, FileText, Calendar, ChevronDown, ChevronUp, DollarSign, ShoppingCart, Package } from 'lucide-react';
+import { Search, FileText, Calendar, ChevronDown, ChevronUp, Coins, ShoppingCart, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { InvoiceModal } from '../components/pos/InvoiceModal';
 import { Transaction } from '../types';
@@ -97,7 +97,7 @@ export const Sales = () => {
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm text-[#8D6E63] font-medium">Total Revenue</p>
             <div className="bg-green-100 p-2 rounded-lg">
-              <DollarSign size={20} className="text-green-600" />
+              <Coins size={20} className="text-green-600" />
             </div>
           </div>
           <p className="text-3xl font-bold text-[#5D4037]">{formatCurrency(totals.revenue)}</p>

@@ -15,7 +15,7 @@ import {
   LineChart,
   Line
 } from 'recharts';
-import { FileChartColumn, TrendingUp, Calendar, Download, DollarSign, ShoppingCart, CreditCard } from 'lucide-react';
+import { FileChartColumn, TrendingUp, Calendar, Download, Coins, ShoppingCart, CreditCard } from 'lucide-react';
 import { dashboardAPI } from '../services/api';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -156,7 +156,7 @@ export const Reports = () => {
         <div className="bg-gradient-to-br from-[#5D4037] to-[#4E342E] p-6 rounded-xl shadow-lg text-white">
           <div className="flex items-center justify-between mb-2">
             <h3 className="font-medium uppercase text-xs tracking-wider opacity-90">Total Revenue</h3>
-            <DollarSign size={24} className="opacity-75" />
+            <Coins size={24} className="opacity-75" />
           </div>
           <p className="text-4xl font-bold">{formatCurrency(summary.totalRevenue)}</p>
           <p className="text-xs opacity-75 mt-2">{salesByDate.length} days of sales</p>
