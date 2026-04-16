@@ -10,12 +10,18 @@ node_modules/
 /build
 /dist
 
-# Environment variables
+# Environment variables - NEVER commit these!
 .env
 .env.local
+.env.development
 .env.development.local
+.env.production
 .env.test.local
 .env.production.local
+backend/.env
+backend/.env.local
+backend/.env.development
+backend/.env.production
 
 # Logs
 npm-debug.log*

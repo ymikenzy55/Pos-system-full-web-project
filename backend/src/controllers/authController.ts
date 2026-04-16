@@ -85,6 +85,12 @@ export async function register(req: Request, res: Response) {
 export async function login(req: Request, res: Response) {
   const { email, password } = req.body;
 
+  // Validate input
+  if (!email || !password) {
+    logger.warn('Login attempt with missing credentials');
+    throw ApiError.badRequest('Email and password are required');
+  }
+
   // Find user with their staff memberships
   const user = await prisma.user.findUnique({
     where: { email },
@@ -98,17 +104,24 @@ export async function login(req: Request, res: Response) {
     },
   });
 
+  // User not found in database
   if (!user) {
-    logger.warn(`Failed login attempt for email: ${email}`);
-    throw ApiError.unauthorized('Invalid email or password');
+    logger.warn(`Failed login attempt - user not found: ${email}`);
+    throw ApiError.unauthorized('Invalid email or password. This account does not exist.');
+  }
+
+  // Check if user has active staff membership
+  if (!user.staffMembers || user.staffMembers.length === 0) {
+    logger.warn(`Failed login attempt - no active staff membership: ${email}`);
+    throw ApiError.unauthorized('Your account is not active. Please contact the administrator.');
   }
 
   // Verify password
   const isPasswordValid = await bcrypt.compare(password, user.password);
 
   if (!isPasswordValid) {
-    logger.warn(`Failed login attempt for email: ${email}`);
-    throw ApiError.unauthorized('Invalid email or password');
+    logger.warn(`Failed login attempt - invalid password: ${email}`);
+    throw ApiError.unauthorized('Invalid email or password. Please check your credentials.');
   }
 
   // Generate JWT token
@@ -117,7 +130,7 @@ export async function login(req: Request, res: Response) {
     email: user.email,
   });
 
-  logger.info(`User logged in: ${email}`);
+  logger.info(`User logged in successfully: ${email}`);
 
   res.json(
     ApiResponse.success({

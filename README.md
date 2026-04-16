@@ -4,13 +4,136 @@ A modern, full-stack POS system built with React, TypeScript, Node.js, and Postg
 
 ## Features
 
-- Secure authentication with role-based access control (Admin, Manager, Cashier)
-- Real-time dashboard with sales analytics
-- Comprehensive inventory management
-- Fast payment processing (<1.5s)
-- Sales tracking with unique transaction IDs
-- Fully responsive mobile design
-- Optimized performance with batch operations
+### Authentication & Security
+- Secure JWT-based authentication
+- Role-based access control (Super Admin, Admin, Manager, Cashier)
+- Bcrypt password hashing
+- Rate limiting and input validation
+- Only super admin can register new users
+
+### Dashboard & Analytics
+- Real-time sales dashboard
+- Today's revenue, orders, and items sold
+- Revenue trends with date filtering
+- Sales by category and payment method
+- Performance metrics and charts
+
+### Inventory Management
+- Product catalog with categories
+- Stock level tracking
+- Low stock alerts
+- Bulk product import/export
+- Product search and filtering
+- SKU management
+
+### Point of Sale
+- Fast checkout process (<1.5s)
+- Multiple payment methods (Cash, Card, Split)
+- Real-time cart management
+- Product discounts (percentage or fixed)
+- Receipt generation and printing
+- Transaction history
+
+### Sales Tracking
+- Unique transaction IDs for each sale
+- Detailed sales history
+- Date-based filtering
+- Expandable transaction details
+- Revenue summaries
+- Payment method tracking
+
+### Staff Management
+- User role assignment (Super Admin only)
+- Staff member creation and management
+- Activity tracking
+- Access control per role
+
+### Reports
+- Revenue reports with date ranges
+- Sales trends visualization
+- Category performance analysis
+- Payment method breakdown
+- Transaction listings
+
+## System Flow
+
+### 1. Initial Setup
+```
+Super Admin Registration → Shop Creation → Database Seeding
+```
+- Super admin creates account with shop details
+- System initializes database with default categories
+- Super admin credentials are stored securely
+
+### 2. User Management Flow
+```
+Super Admin Login → Staff Management → Add Users → Assign Roles
+```
+- Only super admin can add new staff members
+- Roles: Admin, Manager, Cashier
+- Each role has specific permissions
+
+### 3. Inventory Setup Flow
+```
+Admin/Manager Login → Inventory Page → Add Categories → Add Products
+```
+- Create product categories
+- Add products with SKU, price, stock
+- Set low stock thresholds
+- Upload product images
+
+### 4. Sales Flow
+```
+Cashier Login → POS Page → Scan/Select Products → Add to Cart → Apply Discounts → Process Payment → Generate Receipt
+```
+- Products added to cart with quantities
+- Optional discounts per item
+- Multiple payment methods supported
+- Automatic stock deduction
+- Receipt with transaction ID
+
+### 5. Reporting Flow
+```
+Admin/Manager Login → Reports/Sales Page → Select Date Range → View Analytics
+```
+- Filter by date range
+- View revenue trends
+- Analyze category performance
+- Export transaction data
+
+### 6. Daily Operations Flow
+```
+Morning: Check Dashboard → Review Stock Levels → Process Orders
+Afternoon: Monitor Sales → Handle Transactions → Update Inventory
+Evening: Review Reports → Close Register → Generate Daily Summary
+```
+
+## Role Permissions
+
+### Super Admin
+- Full system access
+- Create/manage all users
+- Change user roles
+- Access all reports
+- Manage shop settings
+
+### Admin
+- Manage inventory
+- View all reports
+- Manage staff (cannot change roles)
+- Process sales
+- Access dashboard
+
+### Manager
+- Manage inventory
+- View reports
+- Process sales
+- Access dashboard
+
+### Cashier
+- Process sales only
+- View POS interface
+- Generate receipts
 
 ## Tech Stack
 
@@ -19,6 +142,7 @@ A modern, full-stack POS system built with React, TypeScript, Node.js, and Postg
 - Vite
 - Tailwind CSS
 - Radix UI Components
+- Recharts for analytics
 - Axios for API calls
 
 **Backend:**
@@ -27,6 +151,7 @@ A modern, full-stack POS system built with React, TypeScript, Node.js, and Postg
 - PostgreSQL / Supabase
 - JWT Authentication
 - Bcrypt password hashing
+- Winston logger
 
 ## Getting Started
 
@@ -37,100 +162,59 @@ A modern, full-stack POS system built with React, TypeScript, Node.js, and Postg
 
 ### Installation
 
-1. **Clone the repository**
+1. Clone the repository
 ```bash
 git clone https://github.com/ymikenzy55/Pos-system-full-web-project.git
 cd Pos-system-full-web-project
 ```
 
-2. **Install frontend dependencies**
+2. Install dependencies
 ```bash
+# Frontend
 npm install
-```
 
-3. **Install backend dependencies**
-```bash
+# Backend
 cd backend
 npm install
 ```
 
-4. **Configure environment variables**
+3. Configure environment variables
 ```bash
-# Copy example files and update with your credentials
+# Copy example files
 cp backend/.env.example backend/.env
+
+# Update backend/.env with your credentials:
+# - DATABASE_URL (PostgreSQL connection string)
+# - JWT_SECRET (generate a secure random string)
+# - PORT (default: 3000)
 ```
 
-5. **Set up database**
+4. Set up database
 ```bash
 cd backend
-npm run migrate
-npm run seed
+npx prisma migrate deploy
+npx prisma db seed
 ```
 
-6. **Start development servers**
+5. Start development servers
 ```bash
 # Terminal 1 - Backend
 cd backend
 npm run dev
 
-# Terminal 2 - Frontend
+# Terminal 2 - Frontend (from root)
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`
+Access the app at `http://localhost:5173`
 
-## First Time Setup
+## Default Credentials
 
-After running the seed command, a super admin account will be created. You can then:
-1. Login with the super admin account
-2. Create your shop
-3. Add staff members with different roles
-4. Start adding products and making sales
+After seeding, use these credentials to login:
+- Email: admin@store.com
+- Password: admin123
 
-## Project Structure
-
-```
-├── src/                    # Frontend source
-│   ├── app/
-│   │   ├── components/    # React components
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # API services
-│   │   └── utils/         # Utility functions
-├── backend/               # Backend source
-│   ├── src/
-│   │   ├── controllers/  # Request handlers
-│   │   ├── routes/       # API routes
-│   │   ├── middleware/   # Express middleware
-│   │   ├── config/       # Configuration
-│   │   └── utils/        # Helper functions
-│   └── prisma/           # Database schema & migrations
-└── README.md
-```
-
-## Deployment
-
-This project is configured for deployment on:
-- Frontend: Vercel
-- Backend: Render
-- Database: Supabase
-
-See `DEPLOYMENT.md` for complete step-by-step deployment instructions.
-
-Quick deployment:
-1. Set up Supabase database
-2. Deploy backend to Render with environment variables
-3. Deploy frontend to Vercel with `VITE_API_URL`
-4. Update CORS settings in backend
-
-## Security
-
-- JWT token authentication
-- Bcrypt password hashing (10 rounds)
-- Role-based access control
-- Rate limiting
-- Input validation
-- SQL injection prevention
-- CORS protection
+**Important:** Change these credentials immediately after first login.
 
 ## License
 
