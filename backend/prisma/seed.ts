@@ -54,9 +54,9 @@ async function main() {
 
   console.log('✅ Created admin staff member');
   console.log('\n🎉 Database seed completed successfully!');
-  console.log('\n📝 Super Admin Credentials:');
-  console.log('   Email:    admin@store.com');
-  console.log('   Password: admin123');
+  console.log('\n⚠️  IMPORTANT: A super admin account has been created.');
+  console.log('   Please check your deployment logs or contact your system administrator for credentials.');
+  console.log('   Change the default password immediately after first login.\n');
 }
 
 main()

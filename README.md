@@ -180,13 +180,14 @@ npm install
 
 3. Configure environment variables
 ```bash
-# Copy example files
+# Copy example file
 cp backend/.env.example backend/.env
 
-# Update backend/.env with your credentials:
-# - DATABASE_URL (PostgreSQL connection string)
-# - JWT_SECRET (generate a secure random string)
-# - PORT (default: 3000)
+# Edit backend/.env and configure:
+# - DATABASE_URL: Your PostgreSQL connection string
+# - JWT_SECRET: Generate a secure random string (use: openssl rand -base64 32)
+# - FRONTEND_URL: Your frontend URL
+# - PORT: Backend port (default: 3000)
 ```
 
 4. Set up database
@@ -202,19 +203,11 @@ npx prisma db seed
 cd backend
 npm run dev
 
-# Terminal 2 - Frontend (from root)
+# Terminal 2 - Frontend
 npm run dev
 ```
 
-Access the app at `http://localhost:5173`
-
-## Default Credentials
-
-After seeding, use these credentials to login:
-- Email: admin@store.com
-- Password: admin123
-
-**Important:** Change these credentials immediately after first login.
+The application will be available at `http://localhost:5173`
 
 ## License
 
