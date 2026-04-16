@@ -30,6 +30,8 @@ export interface Product {
   barcode?: string;
   description?: string;
   taxExempt?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CartItem extends Product {
