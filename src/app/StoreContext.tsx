@@ -155,21 +155,46 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       const response: any = await authAPI.login({ email, password });
+      
+      // Check if response is successful
+      if (!response.success || !response.data) {
+        throw new Error('Invalid response from server');
+      }
+      
       const { user: userData, token } = response.data;
+      
+      // Validate user data
+      if (!userData || !token) {
+        throw new Error('Invalid credentials');
+      }
+      
+      // Check if user has a shop assigned
+      if (!userData.shop) {
+        toast.error('Your account is not associated with any shop. Please contact the administrator.');
+        throw new Error('No shop assigned');
+      }
       
       localStorage.setItem('authToken', token);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
       
       // Set shop from user's first staff membership
-      if (userData.shop) {
-        setCurrentShop(userData.shop);
-        localStorage.setItem('currentShop', JSON.stringify(userData.shop));
-      }
+      setCurrentShop(userData.shop);
+      localStorage.setItem('currentShop', JSON.stringify(userData.shop));
       
       toast.success(`Welcome back, ${userData.firstName}!`);
     } catch (error: any) {
-      toast.error(error.error || 'Invalid credentials');
+      console.error('Login error:', error);
+      
+      // Handle specific error messages from backend
+      if (error.error) {
+        toast.error(error.error);
+      } else if (error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error('Login failed. Please check your credentials and try again.');
+      }
+      
       throw error;
     }
   };
