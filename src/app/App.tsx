@@ -12,7 +12,13 @@ import { Toaster } from 'sonner';
 
 const MainContent = () => {
   const { user } = useStore();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    // Set initial tab based on user role
+    if (user?.role === 'CASHIER') {
+      return 'pos';
+    }
+    return 'dashboard';
+  });
 
   if (!user) {
     return <Login />;
@@ -25,18 +31,20 @@ const MainContent = () => {
   const canAccessSettings = ['ADMIN'].includes(userRole);
   const canAccessDashboard = ['ADMIN', 'MANAGER'].includes(userRole);
 
-  // Redirect cashiers to POS if they try to access restricted pages
-  React.useEffect(() => {
-    if (userRole === 'CASHIER' && activeTab !== 'pos' && activeTab !== 'sales') {
-      setActiveTab('pos');
+  // Handle tab changes with role validation
+  const handleTabChange = (tab: string) => {
+    // Prevent cashiers from accessing restricted pages
+    if (userRole === 'CASHIER' && tab !== 'pos' && tab !== 'sales') {
+      return; // Don't change tab
     }
-  }, [userRole, activeTab]);
+    setActiveTab(tab);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F5F5F5]">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} />
       <main className="flex-1 overflow-hidden relative w-full lg:pl-0 pl-0">
-        {activeTab === 'dashboard' && canAccessDashboard && <Dashboard onNavigate={setActiveTab} />}
+        {activeTab === 'dashboard' && canAccessDashboard && <Dashboard onNavigate={handleTabChange} />}
         {activeTab === 'pos' && <POS />}
         {activeTab === 'inventory' && canAccessInventory && <Inventory />}
         {activeTab === 'sales' && <Sales />}
