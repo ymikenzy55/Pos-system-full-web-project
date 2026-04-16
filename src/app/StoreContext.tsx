@@ -480,8 +480,8 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     if (!currentShop) return;
     try {
       const response: any = await productAPI.create(currentShop.id, productData);
-      // Optimistic update - add the new product immediately
-      setProducts(prev => [...prev, response.data]);
+      // Add new product at the TOP of the list
+      setProducts(prev => [response.data, ...prev]);
       toast.success('Product added');
     } catch (error: any) {
       toast.error(error.error || 'Failed to add product');

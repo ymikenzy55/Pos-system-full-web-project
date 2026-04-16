@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useStore } from '../StoreContext';
-import { Plus, Edit, Trash2, Check, X, Package, Search, Upload, Image as ImageIcon, Tag, FolderPlus } from 'lucide-react';
+import { Plus, Edit, Trash2, Check, X, Package, Search, Upload, Image as ImageIcon, Tag, FolderPlus, ArrowUpDown } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -12,6 +12,8 @@ export const Inventory = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortBy, setSortBy] = useState<'name' | 'date' | 'price' | 'stock'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const itemsPerPage = 15;
   const [newProduct, setNewProduct] = useState({ 
     name: '', 
@@ -52,17 +54,45 @@ export const Inventory = () => {
     categoryName: ''
   });
 
-  // Real-time search filtering
+  // Real-time search filtering and sorting
   const filteredProducts = useMemo(() => {
-    if (!searchTerm) return products;
+    let filtered = [...products];
     
-    const search = searchTerm.toLowerCase();
-    return products.filter(product => 
-      product.name.toLowerCase().includes(search) ||
-      product.sku.toLowerCase().includes(search) ||
-      (product.category?.name || '').toLowerCase().includes(search)
-    );
-  }, [products, searchTerm]);
+    // Apply search filter
+    if (searchTerm) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(search) ||
+        product.sku.toLowerCase().includes(search) ||
+        (product.category?.name || '').toLowerCase().includes(search)
+      );
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'date':
+          // Assuming products have createdAt or using id as proxy for creation order
+          comparison = (a.createdAt || a.id).localeCompare(b.createdAt || b.id);
+          break;
+        case 'price':
+          comparison = a.price - b.price;
+          break;
+        case 'stock':
+          comparison = a.stock - b.stock;
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+    
+    return filtered;
+  }, [products, searchTerm, sortBy, sortOrder]);
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
@@ -227,9 +257,9 @@ export const Inventory = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="mb-4 md:mb-6">
-        <div className="relative w-full md:max-w-md">
+      {/* Search and Sort Bar */}
+      <div className="mb-4 md:mb-6 flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input
             type="text"
@@ -239,12 +269,43 @@ export const Inventory = () => {
             className="w-full pl-12 pr-4 py-3 rounded-xl border border-[#E6E0D4] focus:outline-none focus:ring-2 focus:ring-[#5D4037] focus:border-transparent transition-all bg-white"
           />
         </div>
-        {searchTerm && (
-          <p className="text-sm text-[#8D6E63] mt-2">
-            Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
-          </p>
-        )}
+        
+        {/* Sort Controls */}
+        <div className="flex gap-2">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as any)}
+            className="px-4 py-3 rounded-xl border border-[#E6E0D4] focus:outline-none focus:ring-2 focus:ring-[#5D4037] bg-white text-[#5D4037] font-medium cursor-pointer"
+          >
+            <option value="date">Sort by Date</option>
+            <option value="name">Sort by Name</option>
+            <option value="price">Sort by Price</option>
+            <option value="stock">Sort by Stock</option>
+          </select>
+          
+          <button
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="px-4 py-3 rounded-xl border border-[#E6E0D4] bg-white hover:bg-[#FDFBF7] transition-colors"
+            title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+          >
+            {sortOrder === 'asc' ? (
+              <svg className="w-5 h-5 text-[#5D4037]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 text-[#5D4037]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
+      
+      {searchTerm && (
+        <p className="text-sm text-[#8D6E63] mb-4">
+          Found {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''}
+        </p>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-[#E6E0D4] overflow-hidden">
         <div className="overflow-x-auto -mx-4 md:mx-0">

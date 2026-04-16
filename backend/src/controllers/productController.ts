@@ -62,7 +62,7 @@ export async function getAllProducts(req: Request, res: Response) {
     include: {
       category: true,
     },
-    orderBy: { name: 'asc' },
+    orderBy: { createdAt: 'desc' }, // Newest products first
   });
 
   res.json(ApiResponse.success(products));
