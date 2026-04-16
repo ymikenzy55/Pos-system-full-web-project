@@ -182,6 +182,48 @@ export async function updateStaffStatus(req: Request, res: Response) {
 export async function deleteStaff(req: Request, res: Response) {
   const { staffId } = req.params;
 
+  // Check if staff member exists
+  const staffMember = await prisma.staffMember.findUnique({
+    where: { id: staffId as string },
+    include: {
+      user: true,
+      sales: { take: 1 }, // Check if they have any sales
+      refunds: { take: 1 }, // Check if they have any refunds
+    },
+  });
+
+  if (!staffMember) {
+    throw ApiError.notFound('Staff member not found');
+  }
+
+  // Check if staff member has associated sales or refunds
+  if (staffMember.sales.length > 0 || staffMember.refunds.length > 0) {
+    // Instead of deleting, deactivate the staff member
+    const deactivated = await prisma.staffMember.update({
+      where: { id: staffId as string },
+      data: { isActive: false },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    res.json(
+      ApiResponse.success({
+        ...deactivated,
+        message: 'Staff member has transaction history and has been deactivated instead of deleted',
+      })
+    );
+    return;
+  }
+
+  // If no sales or refunds, safe to delete
   await prisma.staffMember.delete({
     where: { id: staffId as string },
   });

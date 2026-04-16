@@ -52,6 +52,24 @@ export async function getAllCategories(req: Request, res: Response) {
 export async function deleteCategory(req: Request, res: Response) {
   const { categoryId } = req.params;
 
+  // Check if category has products
+  const category = await prisma.category.findUnique({
+    where: { id: categoryId as string },
+    include: {
+      products: { take: 1 },
+    },
+  });
+
+  if (!category) {
+    throw ApiError.notFound('Category not found');
+  }
+
+  if (category.products.length > 0) {
+    throw ApiError.conflict(
+      'Cannot delete category with products. Please move or delete the products first.'
+    );
+  }
+
   await prisma.category.delete({
     where: { id: categoryId as string },
   });

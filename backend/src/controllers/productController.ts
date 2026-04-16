@@ -116,6 +116,27 @@ export async function updateProduct(req: Request, res: Response) {
 export async function deleteProduct(req: Request, res: Response) {
   const { productId } = req.params;
 
+  // Check if product exists
+  const product = await prisma.product.findUnique({
+    where: { id: productId as string },
+    include: {
+      saleItems: { take: 1 },
+      refundItems: { take: 1 },
+    },
+  });
+
+  if (!product) {
+    throw ApiError.notFound('Product not found');
+  }
+
+  // Check if product has been sold or refunded
+  if (product.saleItems.length > 0 || product.refundItems.length > 0) {
+    throw ApiError.conflict(
+      'Cannot delete product with transaction history. Consider marking it as out of stock instead.'
+    );
+  }
+
+  // Safe to delete - no transaction history
   await prisma.product.delete({
     where: { id: productId as string },
   });
